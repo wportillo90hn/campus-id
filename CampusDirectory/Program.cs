@@ -37,7 +37,7 @@ do
             break;
 
         case 2:
-            AddPerson();
+            await AddPerson();
             break;
 
         case 3:
@@ -68,9 +68,9 @@ do
     Console.Clear();
 } while (option != 0);
 
-RegisterPeople();
+await RegisterPeople();
 
-async void RegisterPeople(){
+async Task RegisterPeople(){
     using FileStream file = File.Create(peopleFile);
 
     await JsonSerializer.SerializeAsync(file, people);
@@ -82,7 +82,7 @@ async void RegisterPeople(){
             Console.WriteLine($"FullName: {p.FullName}, Type: {p.Type}, Campus: {campuses.FirstOrDefault(c=>c.Id == p.CampusId).Name}");
 }
 
-void AddPerson()
+async Task AddPerson()
 {
     int id, campusId; string fullName; PersonType personType;
 
@@ -136,7 +136,7 @@ void AddPerson()
 
     } while (true);
     people.Add(new Person(id, fullName, personType, campusId, null));
-    RegisterPeople();
+    await RegisterPeople();
     Console.WriteLine("Person added to the list!");
 }
 public enum PersonType
