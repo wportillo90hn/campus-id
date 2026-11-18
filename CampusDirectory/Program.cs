@@ -51,7 +51,7 @@ do
             break;
 
         case 5:
-            foreach(var p in people.GroupBy(p=>p.Type))Console.WriteLine(p.Count());
+            foreach(var group in people.GroupBy(g=>g.Type))Console.WriteLine($"{group.Key}: {p.Count()}");
             break;
 
         case 0:
@@ -79,7 +79,7 @@ async Task RegisterPeople(){
  void ShowList(IEnumerable<Person> list)
 {
     foreach (Person p in list)
-            Console.WriteLine($"FullName: {p.FullName}, Type: {p.Type}, Campus: {campuses.FirstOrDefault(c=>c.Id == p.CampusId).Name}");
+            Console.WriteLine($"FullName: {p.FullName}, Type: {p.Type}, Campus: {campuses.FirstOrDefault(c=>c.Id == p.CampusId)?.Name ?? "Unknown"}");
 }
 
 async Task AddPerson()
