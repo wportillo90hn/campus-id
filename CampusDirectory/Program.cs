@@ -8,7 +8,7 @@ List<Campus> campuses =
 ];
 
 string peopleFile = "people.json";
-List<Person> people = [];
+List<Person> people = new List<Person>();
 
 if (File.Exists(peopleFile))
 {
@@ -24,9 +24,11 @@ do
     Console.WriteLine("1. List.");
     Console.WriteLine("2. Add.");
     Console.WriteLine("3. Find by name.");
-    Console.WriteLine("0. Salir.");
+    Console.WriteLine("4. People without card.");
+    Console.WriteLine("5. Count by type.");
+    Console.WriteLine("0. Exit.");
     Console.WriteLine("---------------------------------");
-    int.TryParse(Console.ReadLine(), out option);
+    if(!int.TryParse(Console.ReadLine(), out option))option = -1;
 
     switch (option)
     {
@@ -41,7 +43,15 @@ do
         case 3:
             Console.Write("Name: ");
             string name = Console.ReadLine() ?? "";
-            ShowList(people.Where(p => p.FullName.Contains(name)));
+            ShowList(people.Where(p => p.FullName.Contains(name,StringComparison.OrdinalIgnoreCase)));
+            break;
+
+        case 4:
+            ShowList(people.Where(p=>p.CardIssuedOn==null));
+            break;
+
+        case 5:
+            foreach(var p in people.GroupBy(p=>p.Type))Console.WriteLine(p.Count());
             break;
 
         case 0:
@@ -52,38 +62,42 @@ do
             Console.WriteLine("Option not valid!");
             break;
     }
+    if(option!=0)Console.WriteLine("Press any key to continue...");
+    
     Console.ReadKey();
     Console.Clear();
 } while (option != 0);
 
-if (people != null)
-{
+RegisterPeople();
+
+async void RegisterPeople(){
     using FileStream file = File.Create(peopleFile);
 
     await JsonSerializer.SerializeAsync(file, people);
 }
 
-
-void ShowList(IEnumerable<Person> people)
+ void ShowList(IEnumerable<Person> list)
 {
-    if (people != null) foreach (Person p in people)
-            Console.WriteLine($"FullName: {p.FullName}, Type: {p.Type}, Campus: {p.CampusId}");
+    foreach (Person p in list)
+            Console.WriteLine($"FullName: {p.FullName}, Type: {p.Type}, Campus: {campuses.FirstOrDefault(c=>c.Id == p.CampusId).Name}");
 }
 
 void AddPerson()
 {
-    Person person = new Person();
-    person.Id = people.Count > 0 ? people.Max(p => p.Id) + 1 : 1;
+    int id, campusId; string fullName; PersonType personType;
+
+    id = people.Count > 0 ? people.Max(p => p.Id) + 1 : 1;
+
     do
     {
-        Console.Write("Introduce Full Name: ");
-        person.FullName = Console.ReadLine() ?? "";
-        if (string.IsNullOrWhiteSpace(person.FullName))
-        {
-            Console.WriteLine("Full Name invalid.");
-        }
+        Console.Write("Enter Full Name: ");
+        fullName = Console.ReadLine() ?? "";
+        if (!string.IsNullOrWhiteSpace(fullName)) break;
+
+        Console.WriteLine("Full Name invalid.");
+
     }
-    while (string.IsNullOrWhiteSpace(person.FullName));
+    while (true);
 
     var personTypes = "";
     foreach (var pt in Enum.GetValues<PersonType>())
@@ -91,38 +105,38 @@ void AddPerson()
         personTypes += (int)pt + " " + pt + ", ";
     }
 
-    Console.Write("Introduce Type: " + personTypes);
+    Console.Write("Enter Type: " + personTypes);
     do
     {
-        PersonType result;
-        if (Enum.TryParse<PersonType>(Console.ReadLine() ?? "", true, out result))
+        if (Enum.TryParse<PersonType>(Console.ReadLine() ?? "", true, out personType))
         {
-            if (Enum.IsDefined(typeof(PersonType), result))
+            if (Enum.IsDefined(personType))
             {
-                person.Type = result;
                 break;
-
             }
         }
+
         Console.WriteLine("Type invalid!");
     } while (true);
 
-    Console.Write("Introduce Campus: ");
+    Console.Write("Enter Campus: ");
     campuses.ForEach(c => Console.Write($"{c.Id}. {c.Name}, "));
     do
     {
         string campus = Console.ReadLine() ?? "";
-        int id;
-        int.TryParse(campus, out id);
-        Campus? result = campuses.Where(c => c.Id == id || string.Equals(c.Name, campus)).FirstOrDefault();
+        int tempId;
+        int.TryParse(campus, out tempId);
+        Campus? result = campuses.FirstOrDefault(c => c.Id == tempId || string.Equals(c.Name, campus,StringComparison.OrdinalIgnoreCase));
         if (result != null)
         {
-            person.CampusId = result.Id;
+            campusId = result.Id;
             break;
         }
-        Console.WriteLine("Center invalid!");
+        Console.WriteLine("Campus invalid!");
+
     } while (true);
-    people.Add(person);
+    people.Add(new Person(id, fullName, personType, campusId, null));
+    RegisterPeople();
     Console.WriteLine("Person added to the list!");
 }
 public enum PersonType
@@ -132,14 +146,5 @@ public enum PersonType
     Staff
 }
 
-
-
 record Campus(int Id, string Name, string Location);
-class Person
-{
-    public int Id { get; set; }
-    public string FullName { get; set; }
-    public PersonType Type { get; set; }
-    public int CampusId { get; set; }
-    public DateOnly? CardIssuedOn { get; set; }
-}
+record Person(int Id, string FullName, PersonType Type, int CampusId, DateOnly? CardIssuedOn);
