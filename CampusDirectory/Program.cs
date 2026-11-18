@@ -8,13 +8,14 @@ List<Campus> campuses =
 ];
 
 string peopleFile = "people.json";
-List<Person>? people = new List<Person>();
+List<Person> people = new List<Person>();
+
+    Console.Write(File.Exists(peopleFile));
 
 if (File.Exists(peopleFile))
 {
     using FileStream file = File.OpenRead(peopleFile);
-
-    people = await JsonSerializer.DeserializeAsync<List<Person>>(file);
+    people = await JsonSerializer.DeserializeAsync<List<Person>>(file) ?? [];
 }
 
 Console.WriteLine("***** Campus Identity Menu *****");
@@ -22,6 +23,9 @@ Console.WriteLine("--------------------------------");
 Console.WriteLine("1. List.");
 Console.WriteLine("2. Add.");
 Console.WriteLine("3. Find by name.");
+Console.WriteLine("---------------------------------");
+Console.WriteLine(JsonSerializer.Serialize(people.Where(p=>p.CardIssuedOn == null).OrderBy(p=>p.CampusId)));
+Console.WriteLine(people.GroupBy(p=>p.Type));
 
 if (people != null && people.Count>0)
 {
