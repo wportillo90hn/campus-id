@@ -51,7 +51,7 @@ do
             break;
 
         case 5:
-            foreach (var group in people.GroupBy(g => g.Type)) Console.WriteLine($"{group.Key}: {p.Count()}");
+            foreach (var group in people.GroupBy(g => g.Type)) Console.WriteLine($"{group.Key}: {group.Count()}");
             break;
 
         case 0:
@@ -88,68 +88,43 @@ void ShowList(IEnumerable<Person> list)
 
 async Task AddPerson()
 {
-    int id, campusId; string fullName; PersonType personType;
+    int id = people.Count > 0 ? people.Max(p => p.Id) + 1 : 1;
+    string prompt = "Enter full name: ";
+    string fullName = Ask(prompt, input => (!string.IsNullOrWhiteSpace(input), input));
 
-    id = people.Count > 0 ? people.Max(p => p.Id) + 1 : 1;
-
-    do
-    {
-        Console.Write("Enter Full Name: ");
-        fullName = Console.ReadLine() ?? "";
-        if (!string.IsNullOrWhiteSpace(fullName)) break;
-
-        Console.WriteLine("Full Name invalid.");
-
-    }
-    while (true);
-
-    var personTypes = "";
+    prompt = "Enter person type: ";
     foreach (var pt in Enum.GetValues<PersonType>())
     {
-        personTypes += (int)pt + " " + pt + ", ";
+        prompt += (int)pt + " " + pt + ", ";
     }
 
-    Console.Write("Enter Type: " + personTypes);
-    do
-    {
-        if (Enum.TryParse<PersonType>(Console.ReadLine() ?? "", true, out personType))
-        {
-            if (Enum.IsDefined(personType))
-            {
-                break;
-            }
-        }
+    PersonType personType = Ask(prompt, input => (Enum.TryParse(input, true, out PersonType pt) && Enum.IsDefined(pt), pt));
 
-        Console.WriteLine("Type invalid!");
-    } while (true);
+    prompt = "Enter Campus: ";
+    campuses.ForEach(c => prompt += $"{c.Id}. {c.Name}, ");
 
-    Console.Write("Enter Campus: ");
-    campuses.ForEach(c => Console.Write($"{c.Id}. {c.Name}, "));
-    do
-    {
-        string campus = Console.ReadLine() ?? "";
-        int tempId;
-        int.TryParse(campus, out tempId);
-        Campus? result = campuses.FirstOrDefault(c => c.Id == tempId || string.Equals(c.Name, campus, StringComparison.OrdinalIgnoreCase));
-        if (result != null)
-        {
-            campusId = result.Id;
-            break;
-        }
-        Console.WriteLine("Campus invalid!");
+    int campusId = Ask(prompt, input =>
+{
+    bool isNumber = int.TryParse(input, out int tempId);
+    var matched = campuses.FirstOrDefault(c =>
+        c.Id == tempId ||
+        string.Equals(c.Name, input, StringComparison.OrdinalIgnoreCase));
 
-    } while (true);
+    return (matched != null, matched?.Id ?? 0);
+});
     people.Add(new Person(id, fullName, personType, campusId, null));
     await RegisterPeople();
     Console.WriteLine("Person added to the list!");
 }
 
-T Ask<T> (string prompt, Func<string,(bool Ok,T Value)> convert){
-    while(true){
+T Ask<T>(string prompt, Func<string, (bool Ok, T Value)> convert)
+{
+    while (true)
+    {
         Console.Write(prompt);
         string input = Console.ReadLine() ?? "";
-        var(ok,value) = convert(input);
-        if(ok) return value;
+        var (ok, value) = convert(input);
+        if (ok) return value;
         Console.WriteLine("Invalid value, try again.");
     }
 }
