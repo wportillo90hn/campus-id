@@ -138,12 +138,5 @@
     "Type": "Student",
     "CampusId": 3,
     "CardIssuedOn": null
-  },
-  {
-    "Id": 21,
-    "FullName": "wilson",
-    "Type": "Faculty",
-    "CampusId": 1,
-    "CardIssuedOn": null
   }
 ]
