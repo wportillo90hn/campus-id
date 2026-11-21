@@ -121,16 +121,17 @@ async Task AddPerson()
     PersonType personType = Ask(prompt, input => (Enum.TryParse(input, true, out PersonType pt) && Enum.IsDefined(pt), pt));
 
     prompt = "Enter Campus: ";
-    prompt += string.Join(", ",campuses.Select(c => $"{c.Id}. {c.Name}"));
+    prompt += string.Join(", ", campuses.Select(c => $"{c.Id}. {c.Name}"));
 
-    int campusId = Ask(prompt, input =>{
+    int campusId = Ask(prompt, input =>
+    {
         bool isNumber = int.TryParse(input, out int tempId);
         var matched = campuses.FirstOrDefault(c =>
             isNumber && c.Id == tempId ||
             string.Equals(c.Name, input, StringComparison.OrdinalIgnoreCase));
 
-    return (matched != null, matched?.Id ?? 0);
-});
+        return (matched != null, matched?.Id ?? 0);
+    });
     people.Add(new Person(id, fullName, personType, campusId, null));
     await RegisterPeople();
 
