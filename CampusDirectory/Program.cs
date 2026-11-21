@@ -105,9 +105,9 @@ async Task AddPerson()
     string fullName;
     while(true){
         fullName = Ask(prompt, input => (!string.IsNullOrWhiteSpace(input), input));
-        if(people.Exists(temp=> temp.FullName == fullName))
+        if(people.Exists(temp=> string.Compare(temp.FullName, fullName,ignoreCase:true)==0))
         {
-            Console.WriteLine("Person exist!");
+            Console.WriteLine("This person already exist!");
         }
         else 
         break;
