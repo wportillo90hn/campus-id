@@ -75,7 +75,6 @@ do
 
 } while (option != 0);
 
-await RegisterPeople();
 
 async Task RegisterPeople()
 {
@@ -115,10 +114,7 @@ async Task AddPerson()
     }
 
     prompt = "Enter person type: ";
-    foreach (var pt in Enum.GetValues<PersonType>())
-    {
-        prompt += string.Join(", ",(int)pt," ",pt);
-    }
+    prompt += string.Join(", ",Enum.GetValues<PersonType>().Select(pt=> $"{(int)pt}. {pt}"));
 
     PersonType personType = Ask(prompt, input => (Enum.TryParse(input, true, out PersonType pt) && Enum.IsDefined(pt), pt));
 
@@ -135,6 +131,7 @@ async Task AddPerson()
     return (matched != null, matched?.Id ?? 0);
 });
     people.Add(new Person(id, fullName, personType, campusId, null));
+await RegisterPeople();
 
     Console.WriteLine("Person added to the list!");
 }
