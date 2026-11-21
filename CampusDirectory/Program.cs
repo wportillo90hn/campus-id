@@ -89,11 +89,10 @@ async Task RegisterPeople()
 
 void ShowList(IEnumerable<Person> list)
 {
-    if (list.Count() == 0) {
+    if (!list.Any()) {
         Console.WriteLine("No people found.");
-        return;
     }
-    
+    else
     foreach (Person p in list)
         Console.WriteLine($"FullName: {p.FullName}, Type: {p.Type}, Campus: {campuses.FirstOrDefault(c => c.Id == p.CampusId)?.Name ?? "Unknown"}, Card On: {p.CardIssuedOn?.ToString() ?? "Pending"}");
 }
@@ -104,7 +103,7 @@ async Task AddPerson()
     string prompt = "Enter full name: ";
     string fullName;
     while(true){
-        fullName = Ask(prompt, input => (!string.IsNullOrWhiteSpace(input), input));
+        fullName = Ask(prompt, input => (!string.IsNullOrWhiteSpace(input), input)).Trim();
         if(people.Exists(temp=> string.Compare(temp.FullName, fullName,ignoreCase:true)==0))
         {
             Console.WriteLine("This person already exist!");
