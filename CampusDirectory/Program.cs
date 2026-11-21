@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
 List<Campus> campuses =
 [
@@ -9,11 +10,14 @@ List<Campus> campuses =
 
 string peopleFile = "people.json";
 List<Person> people = new List<Person>();
-
+JsonSerializerOptions options = new JsonSerializerOptions{
+        WriteIndented = true
+    };
+    options.Converters.Add(new JsonStringEnumConverter());
 if (File.Exists(peopleFile))
 {
     using FileStream file = File.OpenRead(peopleFile);
-    people = await JsonSerializer.DeserializeAsync<List<Person>>(file) ?? [];
+    people = await JsonSerializer.DeserializeAsync<List<Person>>(file,options) ?? [];
 }
 
 int option;
@@ -66,36 +70,52 @@ do
     {
         Console.WriteLine("Press any key to continue...");
         Console.ReadKey();
+        Console.Clear();
     }
 
-    Console.Clear();
 } while (option != 0);
 
 await RegisterPeople();
 
 async Task RegisterPeople()
 {
-    using FileStream file = File.Create(peopleFile);
+    string fileTemp = "temp.js";
+    using FileStream file = File.Create(fileTemp);
 
-    await JsonSerializer.SerializeAsync(file, people);
+    await JsonSerializer.SerializeAsync(file, people,options);
+    File.Move(fileTemp,peopleFile,overwrite:true);
 }
 
 void ShowList(IEnumerable<Person> list)
 {
+    if (list.Count() == 0) {
+        Console.WriteLine("No people found.");
+        return;
+    }
+    
     foreach (Person p in list)
-        Console.WriteLine($"FullName: {p.FullName}, Type: {p.Type}, Campus: {campuses.FirstOrDefault(c => c.Id == p.CampusId)?.Name ?? "Unknown"}");
+        Console.WriteLine($"FullName: {p.FullName}, Type: {p.Type}, Campus: {campuses.FirstOrDefault(c => c.Id == p.CampusId)?.Name ?? "Unknown"}, Card On: {p.CardIssuedOn?.ToString() ?? "Pending"}");
 }
 
 async Task AddPerson()
 {
     int id = people.Count > 0 ? people.Max(p => p.Id) + 1 : 1;
     string prompt = "Enter full name: ";
-    string fullName = Ask(prompt, input => (!string.IsNullOrWhiteSpace(input), input));
+    string fullName;
+    while(true){
+        fullName = Ask(prompt, input => (!string.IsNullOrWhiteSpace(input), input));
+        if(people.Exists(temp=> temp.FullName == fullName))
+        {
+            Console.WriteLine("Person exist!");
+        }
+        else 
+        break;
+    }
 
     prompt = "Enter person type: ";
     foreach (var pt in Enum.GetValues<PersonType>())
     {
-        prompt += (int)pt + " " + pt + ", ";
+        prompt += string.Join(", ",(int)pt," ",pt);
     }
 
     PersonType personType = Ask(prompt, input => (Enum.TryParse(input, true, out PersonType pt) && Enum.IsDefined(pt), pt));
@@ -107,13 +127,12 @@ async Task AddPerson()
 {
     bool isNumber = int.TryParse(input, out int tempId);
     var matched = campuses.FirstOrDefault(c =>
-        c.Id == tempId ||
+        isNumber && c.Id == tempId ||
         string.Equals(c.Name, input, StringComparison.OrdinalIgnoreCase));
 
     return (matched != null, matched?.Id ?? 0);
 });
     people.Add(new Person(id, fullName, personType, campusId, null));
-    await RegisterPeople();
     Console.WriteLine("Person added to the list!");
 }
 
@@ -128,7 +147,7 @@ T Ask<T>(string prompt, Func<string, (bool Ok, T Value)> convert)
         Console.WriteLine("Invalid value, try again.");
     }
 }
-public enum PersonType
+enum PersonType
 {
     Student,
     Faculty,
