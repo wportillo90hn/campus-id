@@ -80,7 +80,7 @@ do
 async Task RegisterPeople()
 {
     string fileTemp = $"{peopleFile}.temp";
-    using (FileStream file = File.Create(fileTemp))
+    await using (FileStream file = File.Create(fileTemp))
     {
         await JsonSerializer.SerializeAsync(file, people, options);
     }
@@ -107,7 +107,7 @@ async Task AddPerson()
     while (true)
     {
         fullName = Ask(prompt, input => (!string.IsNullOrWhiteSpace(input), input)).Trim();
-        if (people.Exists(temp => string.Compare(temp.FullName, fullName, ignoreCase: true) == 0))
+        if (people.Exists(temp => string.Equals(temp.FullName, fullName, StringComparison.OrdinalIgnoreCase)))
         {
             Console.WriteLine("This person already exists!");
         }
@@ -123,12 +123,11 @@ async Task AddPerson()
     prompt = "Enter Campus: ";
     prompt += string.Join(", ",campuses.Select(c => $"{c.Id}. {c.Name}"));
 
-    int campusId = Ask(prompt, input =>
-{
-    bool isNumber = int.TryParse(input, out int tempId);
-    var matched = campuses.FirstOrDefault(c =>
-        isNumber && c.Id == tempId ||
-        string.Equals(c.Name, input, StringComparison.OrdinalIgnoreCase));
+    int campusId = Ask(prompt, input =>{
+        bool isNumber = int.TryParse(input, out int tempId);
+        var matched = campuses.FirstOrDefault(c =>
+            isNumber && c.Id == tempId ||
+            string.Equals(c.Name, input, StringComparison.OrdinalIgnoreCase));
 
     return (matched != null, matched?.Id ?? 0);
 });
