@@ -79,11 +79,13 @@ await RegisterPeople();
 
 async Task RegisterPeople()
 {
-    string fileTemp = "temp.js";
-    using FileStream file = File.Create(fileTemp);
+    string fileTemp = $"{peopleFile}.temp";
+    using (FileStream file = File.Create(fileTemp))
+    {
+        await JsonSerializer.SerializeAsync(file, people, options);
+    }
 
-    await JsonSerializer.SerializeAsync(file, people,options);
-    File.Move(fileTemp,peopleFile,overwrite:true);
+    File.Move(fileTemp, peopleFile, overwrite: true);
 }
 
 void ShowList(IEnumerable<Person> list)
@@ -133,6 +135,7 @@ async Task AddPerson()
     return (matched != null, matched?.Id ?? 0);
 });
     people.Add(new Person(id, fullName, personType, campusId, null));
+
     Console.WriteLine("Person added to the list!");
 }
 
