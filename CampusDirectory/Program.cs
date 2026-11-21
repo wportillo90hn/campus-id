@@ -109,7 +109,7 @@ async Task AddPerson()
         fullName = Ask(prompt, input => (!string.IsNullOrWhiteSpace(input), input)).Trim();
         if (people.Exists(temp => string.Compare(temp.FullName, fullName, ignoreCase: true) == 0))
         {
-            Console.WriteLine("This person already exist!");
+            Console.WriteLine("This person already exists!");
         }
         else
             break;
@@ -121,7 +121,7 @@ async Task AddPerson()
     PersonType personType = Ask(prompt, input => (Enum.TryParse(input, true, out PersonType pt) && Enum.IsDefined(pt), pt));
 
     prompt = "Enter Campus: ";
-    campuses.ForEach(c => prompt += $"{c.Id}. {c.Name}, ");
+    prompt += string.Join(", ",campuses.Select(c => $"{c.Id}. {c.Name}"));
 
     int campusId = Ask(prompt, input =>
 {
